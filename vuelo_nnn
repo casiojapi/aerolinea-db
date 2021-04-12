@@ -1,0 +1,1 @@
+{'nombre': 'maximo', 'asiento': [24, 'C'], 'domicilio_normalizado': "{'altura': 450, 'cod_calle': 19071, 'cod_calle_cruce': None, 'cod_partido': 'caba', 'direccion': 'RODRIGUEZ PEÑA 450, CABA', 'nombre_calle': 'RODRIGUEZ PEÑA', 'nombre_calle_cruce': '', 'nombre_localidad': 'CABA', 'nombre_partido': 'CABA', 'tipo': 'calle_altura'}", 'costo': 19800.0}

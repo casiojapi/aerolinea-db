@@ -7,6 +7,7 @@ from random import randint
 #from tabulate import tabulate
 
 #Constantes del programa
+N_VUELO = 3421
 PASAJE = 22000
 DESCUENTO = 0.1
 VENDER = 1
@@ -48,8 +49,9 @@ def agregar_pasajero(lista, fila, columna, asiento):
     posicion = asiento
     domicilio = input("Ingrese su domicilio: ")
     domic_normalizado = normalizar_direccion(domicilio)
-    costo =  calcular_precio(domic_normalizado)
-    persona = {"nombre": nombre, "asiento": posicion, "domicilio_normalizado": domic_normalizado, "costo": costo}
+    domic = domic_normalizado[0]
+    costo =  domic_normalizado[1]
+    persona = {"nombre": nombre, "asiento": posicion, "domicilio_normalizado": domic, "costo": costo}
     lista.append(persona)
     return lista
     
@@ -85,9 +87,13 @@ def vender(avion, lista):
             columna = 4
         elif asiento[1] in ("Ee"):
             columna = 5
-        elif asiento[1] in ("Ffd"):
+        elif asiento[1] in ("Ff"):
             columna = 6
         libre = esta_libre(avion, fila, columna)
+        if libre == False:
+            print("el asiento esta ocupado")
+        else: 
+            print("asiento disponible")
 
     avion[fila][columna] = "×" 
     
@@ -102,36 +108,33 @@ def esta_libre(avion, fila, columna):
     else:
         return True
 
-# devuelve la direccion normalizada de gba en un string
+# devuelve la direccion normalizada de gba en un string y un precio
 def normalizar_direccion(direccion):
     url = "http://servicios.usig.buenosaires.gob.ar/normalizar/?direccion="
     response = requests.get(url + direccion)
     jsonobj = json.loads(response.content)
-    direc = str(jsonobj["direccionesNormalizadas"][0])
-    return direc
+    dom = jsonobj["direccionesNormalizadas"][0]
 
+    precio = PASAJE
+    partido = dom["cod_partido"]
+
+    if partido == "caba":
+        precio = PASAJE - (PASAJE * DESCUENTO)
+
+    res = [str(dom), precio]
+    return res
 
 # devuelve un string con el porcentaje de ocupacion
 def porcentaje_ocupacion(avion):
     cant = 0
     for i in range(24):
-        for j in range(8):
-            if esta_libre(avion,i,j):
+        for j in range(7):
+            if esta_libre(avion,i,j) == False:
                 cant += 1
     porcentaje = float((cant / 120) * 100)
     imprimir = "El porcentaje de ocupación es: "+ str(porcentaje)+"%"
     return imprimir
 
-# calcula el precio y lo devvuelve segun el partido del pasajero.
-def calcular_precio(direccion_normalizada):
-    partido = direccion_normalizada["cod_partido"]
-    precio = PASAJE
-    
-    if partido == "caba":
-        precio = PASAJE - (PASAJE * DESCUENTO)
-        
-    return precio
-    
 def __main__():
     avion = esquema_avion()
     pasajeros = []
@@ -147,26 +150,27 @@ def __main__():
         if opcion == VENDER:
             venta = vender(avion, pasajeros)
             avion = venta[0]
-            listado_pasajeros = venta[1]
+            pasajeros = venta[1]
            
         if opcion == CERRAR:
-            listado = [{"asiento":"ASIENTO","nombre":"NOMBRE","domicilio":"DIRECCION","costo":"COSTO"}]
-            for pasajeros in listado_pasajeros:
-                listado.append({"asiento":pasajeros["asiento"],"nombre":pasajeros["nombre"],"domicilio":pasajeros["domicilio_normalizado"]["direccion"],"costo":pasajeros["costo"]})
-            print(listado)
-            
-            print("La cantidad de pasajeros es ", len(listado_pasajeros))
-            print("Porcentaje de ocupacion: ", porcentaje_ocupacion(avion))
-            
-            #creo el archivo de texto
-            f = open("vuelo_nnn", "w")
-            for i in listado_pasajeros:
-                 f.write(str(i))
+            cant = 1
+            nombre_archivo = "vuelo{}.txt".format(N_VUELO)
+            f = open(nombre_archivo, "w")
+            for i in pasajeros:
+                imprimir = "{}) {}, {}, {}. Precio: {}".format(cant, i["nombre"], i["asiento"], i["domicilio_normalizado"], i["costo"])
+                print(imprimir)
+                f.write(imprimir)
+                cant += 1
+            imprimir = "La cantidad de pasajeros es {}".format(len(pasajeros))
+            f.write(imprimir)
+            imprimir = "Porcentaje de ocupacion: {}".format(porcentaje_ocupacion(avion))
+            f.write(imprimir)
+
             f.close()
+
         display_menu()
         opcion = int(input("Ingrese otra opcion: "))
 
-        #Aca volverias a llamar a la funcion de validar(SALIR,VENDER)
         while opcion != 1 and opcion != 2 and opcion != 3:
             opcion = int(input("No es valida la opcion, indique devuelta: "))
 
